@@ -19,6 +19,8 @@ All six reports recorded 100% successful checks and zero HTTP failures. Their th
 
 The saved stage 02 read report has about 6.29 times the request rate of stage 01, and the stage 03 read report about 13.63 times stage 02. These are observed differences between runs. Without recorded deployment settings and controlled repeated runs, they cannot establish the gain due solely to indexes or workers.
 
+The current stage 02 code uses synchronous FastAPI handlers and psycopg's `ConnectionPool`. Stage 03 uses async handlers and `AsyncConnectionPool`, with awaited database operations. The transition therefore changes the request concurrency model as well as worker count and pool size. The saved reports do not capture the source revision used for each run, so the observed stage 02–03 improvement cannot be attributed to additional workers alone. Compare sync and async implementations with equal worker counts, pool capacity, and workload settings to measure that change separately.
+
 ## Observed Kubernetes read run
 
 The user ran the following from `04 - horizontal scalling (k8s)`:
@@ -50,22 +52,7 @@ Read-only inspection during debugging found:
 
 Three single-worker pods allow up to 30 pooled app database connections. A 16-worker Compose setting allows up to 160. The Kubernetes route adds NodePort and NGINX, and all kind nodes share the same physical host. Worker count, network overhead, proxy capacity, app queues, database contention, and generator load are possible contributors; the current evidence does not isolate their costs.
 
-Compare one versus three pods within Kubernetes, then compare Compose and Kubernetes with equal total workers and pool capacity. Capture CPU, memory, connection activity, and request timing during each run. See the [Kubernetes commands](commands/kubernetes.md) and [benchmark plan](ARCHITECTURE-BENCHMARK-PLAN.md).
-
-## Archived baseline experiments
-
-These reports preserve earlier workloads and deployments. Do not combine them with the current four-query API as if the deployment configuration were identical. The reports do not capture exact endpoint URLs, app code, workers, pool sizes, index state, or dataset size.
-
-| Archived report | Start time (UTC) | Requests/s | Average ms | p95 ms | HTTP failures |
-| --- | --- | ---: | ---: | ---: | ---: |
-| [load.html](workload-test/k6/01%20-%20basic/archive/load.html) | 2026-09-27 12:23:55 | 646.71 | 1,164.40 | 1,558.70 | 0.00% |
-| [spike.html](workload-test/k6/01%20-%20basic/archive/spike.html) | 2026-09-27 12:40:47 | 672.88 | 1,403.80 | 5,000.60 | 23.19% |
-| [stress.html](workload-test/k6/01%20-%20basic/archive/stress.html) | 2026-09-27 12:26:48 | 708.50 | 2,695.80 | 5,000.60 | 42.41% |
-| [v2/load.html](workload-test/k6/01%20-%20basic/archive/v2/load.html) | 2026-09-27 14:08:42 | 33.64 | 22,926.00 | 31,614.00 | 0.00% |
-| [v2/spike.html](workload-test/k6/01%20-%20basic/archive/v2/spike.html) | 2026-09-27 14:15:41 | 1.41 | 55,669.00 | 67,551.00 | 0.00% |
-| [v2/stress.html](workload-test/k6/01%20-%20basic/archive/v2/stress.html) | 2026-09-27 14:11:07 | 32.20 | 47,071.00 | 88,452.00 | 0.96% |
-
-The first archived load run plateaued near 647 requests/s with roughly 1.55-second average latency during its 1,000-VU hold. Its stress and spike experiments recorded substantial failures. The later `v2` reports show that zero HTTP failures can coexist with response times measured in tens of seconds. None establishes a latency-compliant sustainable capacity.
+Compare one versus three pods within Kubernetes, then compare Compose and Kubernetes with equal total workers and pool capacity. Capture CPU, memory, connection activity, and request timing during each run. See the [Kubernetes commands](commands/kubernetes.md).
 
 ## Evidence needed for comparisons
 
@@ -73,4 +60,4 @@ The current shared script selects four Yelp reads at random, or executes a separ
 
 Record the exact command, timeout, source revision, worker count, replicas, pool maximum, PostgreSQL settings, indexes, dataset size, warm-up, and host resources with each report. Write tests grow the table. Capture steady-stage metrics and resource observations, repeat comparisons, and choose error and latency targets before claiming sustainable capacity.
 
-Reports do not provide per-query timings, synchronized CPU or pool-wait measurements, or a complete error breakdown. Current settings cannot be assumed to describe an older run. Temporary reports directly under `workload-test/k6/` are ignored; reviewed stage reports and the archived evidence remain shareable.
+Reports do not provide per-query timings, synchronized CPU or pool-wait measurements, or a complete error breakdown. Current settings cannot be assumed to describe an older run. Temporary reports directly under `workload-test/k6/` are ignored; reviewed stage reports remain shareable.
