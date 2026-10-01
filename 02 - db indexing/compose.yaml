@@ -1,0 +1,38 @@
+services:
+  app:
+    build: ./app
+    ports:
+      - "8080:8080"
+    environment:
+      WEB_CONCURRENCY: ${APP_WORKERS:-1}
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: app
+      DB_USER: app
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: app
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    command: ["postgres", "-c", "max_connections=100"]
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - ./yelp.sql:/docker-entrypoint-initdb.d/02-yelp.sql:ro
+      # ./init.sql — the file beside compose.yaml.
+      # /docker-entrypoint-initdb.d/01-init.sql — where Docker mounts it inside the PostgreSQL container.
+      # :ro — the container can read the file but cannot change it.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres_data:

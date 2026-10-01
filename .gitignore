@@ -1,0 +1,65 @@
+# Local configuration and credentials; keep shareable examples
+.env
+.env.*
+*.env
+*.env.*
+.envrc
+!.env.example
+!.env.*.example
+!*.env.example
+!*.env.*.example
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa
+id_ed25519
+
+# Python environments, caches, and build artifacts
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.coverage
+htmlcov/
+build/
+dist/
+*.egg-info/
+
+# Local tools and account configuration
+.agents/
+.codex/
+.aws/
+.kube/
+
+# Local datasets, database storage, and logs
+yelp_database.csv
+yelp_database.csv.gz
+yelp_database.zip
+postgres_data/
+*.dump
+*.backup
+*.sql.gz
+*.log
+logs/
+
+# Temporary k6 output; curated stage reports remain versioned
+/workload-test/k6/*.html
+/workload-test/k6/*.csv
+/workload-test/k6/*.json
+/workload-test/k6/*.json.gz
+
+# Editor and OS files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*.tmp
+*~

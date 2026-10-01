@@ -1,0 +1,2 @@
+# Shared exclusions are maintained in the root .gitignore.
+.env
